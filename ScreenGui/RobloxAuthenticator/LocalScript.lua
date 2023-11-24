@@ -3,6 +3,13 @@ local TOTP = require(game.ReplicatedStorage.totp)
 local RobloxAuthenticator = script.Parent
 local Body = RobloxAuthenticator.Body
 local List = Body.List
+local Head = RobloxAuthenticator.Head
+
+local NavTitle = Head.NavTitle
+local NavTitleHamburger = NavTitle.TextButton
+local Settings = Head.Settings
+local Options = Settings.Options
+
 local OTPEntryTemplate = script.OTPEntry
 
 local PFP = RobloxAuthenticator.Head.ImageLabel
@@ -69,7 +76,7 @@ local function setupOTPEntry(secret, provider, name)
 			if 30 - os.time() % 30 <= 5 then
 				newOTPEntry.ServiceCode.TextColor3 = Color3.fromHex("#dc8990")
 				newOTPEntry.TimerHolder.TimerText.TextColor3 = Color3.fromHex("#dc8990")
-				if os.time() % 2 == 0 then
+				if os.time() % 2 == 0 then -- flashing effect
 					newOTPEntry.ServiceCode.TextTransparency = 0.35
 					newOTPEntry.TimerHolder.TimerText.TextTransparency = 0.35
 				else
@@ -88,4 +95,46 @@ local function setupOTPEntry(secret, provider, name)
 	newOTPEntry.Parent = List
 end
 
-setupOTPEntry("XPXWBXUORWN5CJMZUYQQ5NPDKVRGFZSZ", "Roblox", "Demo")
+local isSettingsOpen = false	
+local settingTweenData = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0)
+local optionsTweenData = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0)
+
+Options.Position = UDim2.new(-1, 0, 0, 0) -- set closed here as want to keep settngs accessible when editing in studio
+Settings.BackgroundTransparency = 1
+Settings.Visible = false
+
+NavTitleHamburger.MouseButton1Click:Connect(function() -- afaik tweens garbage collect automatically
+	if isSettingsOpen then
+		isSettingsOpen = false
+		
+		local tween = game:GetService("TweenService"):Create(Options, optionsTweenData, {
+			Position = UDim2.new(-1, 0, 0, 0)
+		}) -- throw settings panel off screen
+		tween:Play()
+		
+		local tween = game:GetService("TweenService"):Create(Settings, settingTweenData, {
+			BackgroundTransparency = 1
+		}) -- fade out background
+		tween:Play()
+		tween.Completed:Wait()
+		
+		Settings.Visible = false
+	else
+		isSettingsOpen = true
+		
+		Settings.Visible = true
+		
+		local tween = game:GetService("TweenService"):Create(Settings, settingTweenData, {
+			BackgroundTransparency = 0.75
+		}) -- fade in background
+		tween:Play()
+		
+		local tween = game:GetService("TweenService"):Create(Options, optionsTweenData, {
+			Position = UDim2.new(0, 0, 0, 0)
+		}) -- throw settings panel on screen
+		tween:Play()
+		tween.Completed:Wait()
+	end
+end)
+
+setupOTPEntry("XPXWBXUORWN5CJMZUYQQ5NPDKVRGFZSZ", "Roblox", "Demo") -- test entry
